@@ -16,6 +16,8 @@ val secretsProperties = Properties().apply {
     }
 }
 
+
+
 android {
     namespace = "com.me.gemini"
     compileSdk = 35
@@ -28,25 +30,19 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val geminiKey = secretsProperties.getProperty("GEMINI_API_KEY") ?: "MISSING_KEY"
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiKey\"")
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            buildConfigField(
-                "String",
-                "GEMINI_API_KEY",
-                secretsProperties.getProperty("GEMINI_API_KEY")
-            )
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            resValue("string", "gemini_api_key", secretsProperties.getProperty("GEMINI_API_KEY"))
-        }
-
-        debug {
-            resValue("string", "gemini_api_key", secretsProperties.getProperty("GEMINI_API_KEY"))
         }
     }
     compileOptions {
@@ -59,10 +55,17 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8" // Match with your Kotlin version
     }
+
+
     buildFeatures {
         compose = true
-        buildConfig = true  // 👈 Add this
+        buildConfig = true // ✅ تأكد إنه جوه android
     }
+
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions.freeCompilerArgs += "-Xcontext-receivers"
 }
 
 dependencies {

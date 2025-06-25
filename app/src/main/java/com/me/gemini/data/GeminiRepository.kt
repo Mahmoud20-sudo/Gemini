@@ -1,10 +1,8 @@
 package com.me.gemini.data
 
 import android.content.Context
-import com.google.ai.client.generativeai.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
-import com.me.gemini.R
-import com.me.gemini.data.model.ChatMessage
+import com.me.gemini.BuildConfig
 import com.me.gemini.extension.parseGeminiError
 import javax.inject.Inject
 
@@ -12,7 +10,7 @@ class GeminiRepository @Inject constructor(private val context: Context) {
     // For multimodal (text + image)
     private val visionModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
-        apiKey = "AIzaSyDykQhtYHXDYVSf2RXsDyd2AQ6Vm5A9o28"
+        apiKey = BuildConfig.GEMINI_API_KEY,
     )
 
     suspend fun generateResponse(prompt: String): String {

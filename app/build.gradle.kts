@@ -134,4 +134,14 @@ dependencies {
 
     implementation(libs.accompanist.permissions) // Use latest version
     implementation(libs.androidx.activity.compose) // For rememberLauncherForActivityResult
+
+    // TensorFlow Lite for on-device ML
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.support)
+    implementation(libs.tensorflow.lite.task.text)
+
+
+// Optional: For JSON parsing if your knowledge base is in JSON
+    implementation(libs.gson)
+
 }

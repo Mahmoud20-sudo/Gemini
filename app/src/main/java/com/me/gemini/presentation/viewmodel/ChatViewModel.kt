@@ -4,6 +4,7 @@ import android.app.Application
 import android.media.MediaPlayer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.me.gemini.data.DataLoader
 import com.me.gemini.data.GeminiRepository
 import com.me.gemini.data.model.ChatMessage
 import com.me.gemini.extension.parseGeminiError
@@ -19,8 +20,75 @@ import javax.inject.Inject
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val application: Application,
+    private val jsonHelper: DataLoader,
     private val repository: GeminiRepository
 ) : ViewModel() {
+
+    suspend fun sendMessageToJson(userMessage: String) {
+        _chatState.update { state ->
+            state.copy(
+                messages = state.messages + ChatMessage(
+                    content = userMessage,
+                    isFromUser = true
+                ),
+                isLoading = true
+            )
+        }
+
+        try {
+            // First search the JSON file
+            val jsonString = jsonHelper.loadJsonFromAssets("data.json")
+            val jsonResults = jsonHelper.searchJson(userMessage, jsonString)
+
+            // Create prompt for Gemini
+            val prompt = """
+                User asked: $userMessage
+            
+                Here's what I found in the knowledge base:
+                $jsonResults
+            
+                Please provide a helpful answer combining this information with your general knowledge.
+                If the information contradicts your knowledge, prioritize the knowledge base.
+            """.trimIndent()
+
+            val response = repository.generateResponse(prompt)
+
+            _chatState.update { state ->
+                state.copy(
+                    messages = state.messages + ChatMessage(
+                        content = response,
+                        isFromUser = false,
+                        lastResponseForTTS = response
+                    ),
+                    isLoading = false
+                )
+            }
+        } catch (e: Exception) {
+            addSystemMessage("Error: ${e.parseGeminiError()}")
+            _chatState.update { it.copy(isLoading = false) }
+        }
+    }
+
+    private suspend fun generateResponse(prompt: String) {
+        try {
+            val response = repository.generateResponse(prompt)
+            _chatState.value = _chatState.value.copy(
+                messages = _chatState.value.messages + ChatMessage(
+                    content = response ?: "No response generated",
+                    isFromUser = false
+                )
+            )
+        } catch (e: Exception) {
+            _chatState.value = _chatState.value.copy(
+                messages = _chatState.value.messages + ChatMessage(
+                    content = "Error: ${e.message}",
+                    isFromUser = false
+                )
+            )
+        }
+    }
+
+
     private val _recordingState = MutableStateFlow<RecordingState>(RecordingState.Idle)
     private val recordingState: StateFlow<RecordingState> = _recordingState.asStateFlow()
 

@@ -1,6 +1,7 @@
 package com.me.gemini.di
 
 import android.content.Context
+import com.me.gemini.data.DataLoader
 import com.me.gemini.data.GeminiRepository
 import dagger.Module
 import dagger.Provides
@@ -18,5 +19,13 @@ object AppModule {
         @ApplicationContext context: Context
     ): GeminiRepository {
         return GeminiRepository(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDataLoader(
+        @ApplicationContext context: Context
+    ): DataLoader {
+        return DataLoader(context)
     }
 }

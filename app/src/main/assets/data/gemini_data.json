@@ -1,0 +1,31 @@
+{
+  "faqs": [
+    {
+      "id": 1,
+      "question": "What is Gemini AI?",
+      "answer": "Gemini AI is Google's advanced AI model that can understand and generate human-like text."
+    },
+    {
+      "id": 2,
+      "question": "How do I use Gemini in my Android app?",
+      "answer": "You need to add the Google AI SDK dependency and get an API key from Google AI Studio."
+    },
+    {
+      "id": 3,
+      "question": "Is Gemini free to use?",
+      "answer": "Gemini has both free and paid tiers depending on usage volume."
+    }
+  ],
+  "features": [
+    {
+      "name": "Text Generation",
+      "description": "Generates human-like text based on prompts",
+      "use_case": "Chatbots, content creation"
+    },
+    {
+      "name": "Image Understanding",
+      "description": "Can analyze and describe images",
+      "use_case": "Accessibility, image search"
+    }
+  ]
+}

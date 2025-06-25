@@ -22,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.me.gemini.helper.VoiceChatHandler
 import com.me.gemini.presentation.component.MessageBubble
 import com.me.gemini.presentation.viewmodel.ChatViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun GeminiChatScreen(
@@ -40,6 +42,7 @@ fun GeminiChatScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val chatState by viewModel.chatState.collectAsState()
     val focusManager = LocalFocusManager.current
     var messageText by remember { mutableStateOf("") }
@@ -91,7 +94,9 @@ fun GeminiChatScreen(
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(
                     onSend = {
-                        viewModel.sendMessage(messageText)
+                        scope.launch {
+                            viewModel.sendMessage(messageText)
+                        }
                         focusManager.clearFocus()
                     }
                 )

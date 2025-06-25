@@ -110,7 +110,10 @@ fun GeminiChatScreen(
 
             IconButton(
                 onClick = {
-                    viewModel.processVoiceInput(messageText)
+                    scope.launch {
+                        viewModel.sendMessageToJson(messageText)
+                    }
+//                    viewModel.processVoiceInput(messageText)
                 }
             ) {
                 Icon(Icons.Default.Check, "Stop")

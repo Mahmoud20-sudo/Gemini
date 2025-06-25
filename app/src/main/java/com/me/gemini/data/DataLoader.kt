@@ -16,39 +16,48 @@ class DataLoader @Inject constructor(private val context: Context) {
     }
 
     // Search JSON for relevant content
-    fun searchJson(query: String, jsonString: String): String {
+    fun searchJson(query: String, jsonString: String): List<Map<String, Any>> {
         val jsonMapType = object : TypeToken<Map<String, Any>>() {}.type
         val jsonData = gson.fromJson<Map<String, Any>>(jsonString, jsonMapType)
 
-        // Simple keyword search - you can enhance this
-        val results = mutableListOf<String>()
+        val results = mutableListOf<Map<String, Any>>()
 
-        jsonData.forEach { (key, value) ->
+        jsonData.forEach { (_, value) ->
             when (value) {
                 is List<*> -> {
                     value.forEach { item ->
                         if (item is Map<*, *>) {
-                            item.values.forEach { field ->
-                                if (field.toString().contains(query, ignoreCase = true)) {
-                                    results.add(gson.toJson(item))
+                            // Safe transformation with null handling
+                            val itemMap = item.entries
+                                .mapNotNull { entry ->
+                                    val key = entry.key?.toString() ?: return@mapNotNull null
+                                    val value = entry.value ?: return@mapNotNull null
+                                    key to value
                                 }
+                                .toMap()
+
+                            if (itemMap.values.any { it.toString().contains(query, ignoreCase = true) }) {
+                                results.add(itemMap)
                             }
                         }
                     }
                 }
+                is Map<*, *> -> {
+                    // Same safe transformation for top-level maps
+                    val map = value.entries
+                        .mapNotNull { entry ->
+                            val key = entry.key?.toString() ?: return@mapNotNull null
+                            val value = entry.value ?: return@mapNotNull null
+                            key to value
+                        }
+                        .toMap()
 
-                else -> {
-                    if (value.toString().contains(query, ignoreCase = true)) {
-                        results.add("$key: $value")
+                    if (map.values.any { it.toString().contains(query, ignoreCase = true) }) {
+                        results.add(map)
                     }
                 }
             }
         }
 
-        return if (results.isEmpty()) {
-            "No direct matches found in JSON data."
-        } else {
-            "Found ${results.size} relevant items:\n\n${results.joinToString("\n\n")}"
-        }
-    }
-}
+        return results
+    }}

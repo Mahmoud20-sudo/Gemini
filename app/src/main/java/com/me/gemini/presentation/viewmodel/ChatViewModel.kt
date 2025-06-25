@@ -25,48 +25,49 @@ class ChatViewModel @Inject constructor(
 ) : ViewModel() {
 
     suspend fun sendMessageToJson(userMessage: String) {
-        _chatState.update { state ->
-            state.copy(
-                messages = state.messages + ChatMessage(
-                    content = userMessage,
-                    isFromUser = true
-                ),
-                isLoading = true
-            )
-        }
-
         try {
-            // First search the JSON file
-            val jsonString = jsonHelper.loadJsonFromAssets("data.json")
-            val jsonResults = jsonHelper.searchJson(userMessage, jsonString)
+            // 1. Load and search JSON data
+            val jsonString = jsonHelper.loadJsonFromAssets("data/gemini_data.json")
+            val jsonResults = jsonHelper.searchJson(userMessage.trim(), jsonString)
 
-            // Create prompt for Gemini
-            val prompt = """
-                User asked: $userMessage
-            
-                Here's what I found in the knowledge base:
-                $jsonResults
-            
-                Please provide a helpful answer combining this information with your general knowledge.
-                If the information contradicts your knowledge, prioritize the knowledge base.
-            """.trimIndent()
-
-            val response = repository.generateResponse(prompt)
-
-            _chatState.update { state ->
-                state.copy(
-                    messages = state.messages + ChatMessage(
-                        content = response,
-                        isFromUser = false,
-                        lastResponseForTTS = response
-                    ),
-                    isLoading = false
-                )
+            // 2. Format JSON results for the prompt
+            val jsonContext = if (jsonResults.isNotEmpty()) {
+                "Here are relevant facts from our database:\n" +
+                        jsonResults.joinToString("\n") { result ->
+                            result.entries.joinToString(", ") { "${it.key}: ${it.value}" }
+                        }
+            } else {
+                "No matching data found in our database."
             }
+
+            // 3. Create a more structured prompt
+            val prompt = """
+            User Question: $userMessage
+            
+            $jsonContext
+            
+            Instructions:
+            1. First check if the question can be answered using the provided data
+            2. If the data exists, use it to formulate your answer
+            3. If no data exists, say "I couldn't find that in my data, but here's what I know:" 
+               and provide a general answer
+            4. Keep answers concise and accurate
+        """.trimIndent()
+
+            // 4. Get Gemini's response
+            val response = repository.generateResponse(prompt)
+            _chatState.value = _chatState.value.copy(
+                messages = _chatState.value.messages + ChatMessage(
+                    content = response ?: "No response generated",
+                    isFromUser = false
+                )
+            )
+
         } catch (e: Exception) {
             addSystemMessage("Error: ${e.parseGeminiError()}")
             _chatState.update { it.copy(isLoading = false) }
         }
+
     }
 
     private suspend fun generateResponse(prompt: String) {

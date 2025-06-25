@@ -95,7 +95,7 @@ fun GeminiChatScreen(
                 keyboardActions = KeyboardActions(
                     onSend = {
                         scope.launch {
-                            viewModel.sendMessage(messageText)
+                            viewModel.sendMessageToJson(messageText)
                         }
                         focusManager.clearFocus()
                     }
